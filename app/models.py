@@ -18,6 +18,9 @@ class OrderStatus(str, Enum):
     CANCELLED = "cancelled"
     NOT_HONORED = "not_honored"
 
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    USER = "user"
 
 # ---------------------------------------------------------------------------
 # Tables d'association (clés primaires composées)
@@ -66,7 +69,7 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(max_length=50, unique=True, index=True)
     password_hash: str = Field(max_length=255)
-    is_admin: bool = Field(default=False)
+    role: UserRole = Field(default=UserRole.USER)
     is_blocked: bool = Field(default=False)
     must_change_password: bool = Field(default=True)
     created_at: dt.datetime = Field(default_factory=utcnow)
