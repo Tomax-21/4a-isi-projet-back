@@ -18,3 +18,6 @@ def hash_password(password):
     salt = bcrypt.gensalt() # graine randoù
     hashed_bytes = bcrypt.hashpw(password_bytes, salt)
     return hashed_bytes.decode()#byte vers txt
+
+def verify_password(password, password_hash):
+    return bcrypt.checkpw(password.encode(), password_hash.encode())
