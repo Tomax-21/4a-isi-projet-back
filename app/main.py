@@ -1,13 +1,24 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
 
 from app.database import create_db_and_tables
 from app.routers import auth
 
+
+@asynccontextmanager
+async def lifespan():
+    create_db_and_tables()   # exec au démarrage du serv
+    yield                    # serv tourne la
+             
+
 app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
+#@app.on_event("startup")
+#def on_startup():
+#    create_db_and_tables()
+
+
 
 
 @app.get("/")
