@@ -3,15 +3,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from sqlmodel import Session, select
-
+from dataclasses import dataclass
 from app.database import get_session
 from app.models import User
 from app.security import verify_password, create_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
+
+@dataclass
+class LoginInput:
+    username: str
+    password: str
+
 @router.post("/login")
-def login(data, session: Session = Depends(get_session)):
+def login(data: LoginInput, session: Session = Depends(get_session)):
 
     user:User = session.exec(select(User).where(User.username == data.username)).first()
 
