@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from dataclasses import dataclass
 from app.database import get_session
-from app.models import User
+from app.models import User, UserRole
 from app.security import verify_password, create_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -20,7 +20,7 @@ class LoginInput:
 @dataclass
 class LoginOutput:
     access_token: str
-    role: str
+    role: UserRole
 
 
 @router.post("/login", response_model=LoginOutput, summary="Connexion")
