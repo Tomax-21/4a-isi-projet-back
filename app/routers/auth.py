@@ -17,7 +17,13 @@ class LoginInput:
     username: str
     password: str
 
-@router.post("/login")
+@dataclass
+class LoginOutput:
+    access_token: str
+    role: str
+
+
+@router.post("/login", response_model=LoginOutput, summary="Connexion")
 def login(data: LoginInput, session: Session = Depends(get_session)):
 
     user:User = session.exec(select(User).where(User.username == data.username)).first()
