@@ -9,7 +9,7 @@ from fastapi import HTTPException
 
 CLE_DEV = "azdncbszhhckfd"
 SECRET_KEY = os.environ.get("SECRET_KEY", CLE_DEV)
-ALGORITHM = "HS256"
+ALGORITHM = "HS256" #HMAC avec SHA-256
 TOKEN_DURATION = timedelta(hours=2)
 
 
@@ -21,3 +21,11 @@ def hash_password(password):
 
 def verify_password(password, password_hash):
     return bcrypt.checkpw(password.encode(), password_hash.encode())
+
+
+def create_token(user_id: int) -> str:
+    payload = {
+        "sub": str(user_id),
+        "exp": datetime.now(timezone.utc) + TOKEN_DURATION,
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
