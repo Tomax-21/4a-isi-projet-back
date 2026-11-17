@@ -23,9 +23,17 @@ def verify_password(password, password_hash):
     return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
-def create_token(user_id: int) -> str:
+def create_token(user_id):
     payload = {
         "sub": str(user_id),
         "exp": datetime.now(timezone.utc) + TOKEN_DURATION,
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return int(payload["sub"]) #userId
+    except:
+        raise HTTPException(status_code=401, detail="bad token")
+
