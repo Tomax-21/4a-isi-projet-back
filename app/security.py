@@ -7,7 +7,7 @@ import jwt
 from fastapi import HTTPException
 
 
-CLE_DEV = "azdncbszhhckfd"
+CLE_DEV = "une_longue_longue_cle_a_ne_pas_oublier_hdsjkfsfhhbsghv"
 SECRET_KEY = os.environ.get("SECRET_KEY", CLE_DEV)
 ALGORITHM = "HS256" #HMAC avec SHA-256
 TOKEN_DURATION = timedelta(hours=2)
@@ -37,3 +37,12 @@ def decode_token(token):
     except:
         raise HTTPException(status_code=401, detail="bad token")
 
+
+def test():
+    token = create_token(123)
+    print(token)
+    print(decode_token(token))
+
+
+    pwd_hash = hash_password("abcdef")
+    print(verify_password("abcdef", pwd_hash))
