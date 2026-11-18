@@ -74,3 +74,17 @@ def get_product_by_id(product_id: int, session: Session = Depends(get_session)):
 @router.post("", status_code=201, summary="Créer un produit")
 def create_product(data: ProductInput, admin: User = Depends(require_admin), session: Session=Depends(get_session)):
     check_product_data_validity(data)
+
+    product = Product(
+        name = data.name.strip(),
+        description=data.description,
+        price=data.price,
+        quantity=data.quantity,
+        is_available=data.is_available,
+    )
+
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+
+    return product_to_productOutput_type(product)
