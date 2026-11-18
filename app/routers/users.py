@@ -12,7 +12,13 @@ router = APIRouter(prefix="/users", tags=["users"])
 class UserCreateInput:
     username:str
 
-@router.post("/")
+@dataclass 
+class UserCreateOutput:
+    id: int
+    username: str
+    password: str
+
+@router.post("/", response_model=UserCreateOutput, status_code=201, summary="Créer un compte")
 def create_user(data:UserCreateInput, session: Session= Depends(get_session)):
     username = data.username.strip()
 
