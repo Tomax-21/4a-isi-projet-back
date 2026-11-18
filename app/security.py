@@ -1,7 +1,7 @@
 # app/security.py
 import os
 from datetime import datetime, timedelta, timezone
-
+import secrets
 import bcrypt
 import jwt
 from fastapi import HTTPException
@@ -11,6 +11,10 @@ CLE_DEV = "une_longue_longue_cle_a_ne_pas_oublier_hdsjkfsfhhbsghv"
 SECRET_KEY = os.environ.get("SECRET_KEY", CLE_DEV)
 ALGORITHM = "HS256" #HMAC avec SHA-256
 TOKEN_DURATION = timedelta(hours=2)
+
+def generate_random_password(lenght=10):
+    return secrets.token_urlsafe(lenght)
+
 
 
 def hash_password(password):
