@@ -37,6 +37,18 @@ def product_to_productOutput_type(product: Product):
         "is_available": product.is_available,
     }
 
+def check_product_data_validity(product: ProductInput):
+
+    if len(product.name) > 100:
+        raise
+
+    if product.quantity < 0:
+        raise
+
+    if product.price < 0.01:
+        raise
+
+
 
 @router.get("", response_model = list[ProductOutput], summary="Lister tous les produits")
 def get_all_products(session: Session = Depends(get_session)):
@@ -55,3 +67,10 @@ def get_product_by_id(product_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="product not found")
 
     return product_to_productOutput_type(product)
+
+
+
+
+@router.post("", status_code=201, summary="Créer un produit")
+def create_product(data: ProductInput, admin: User = Depends(require_admin), session: Session=Depends(get_session)):
+    check_product_data_validity(data)
