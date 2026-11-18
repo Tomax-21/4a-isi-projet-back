@@ -34,8 +34,15 @@ def closure_to_closureOutput_type(closure: ClosedDay):
 
 
 @router.get("", response_model=list[ClosureOutput], summary="Liste de tous les jours de fermeture")
-def get_all_closures(session:Session=Depends(get_session)):
-    closures = session.exec(select(ClosedDay).order_by(ClosedDay.date)).all()
+def get_all_closures(date : datetime.date | None, session:Session=Depends(get_session)):
+    # ?date=AAAA-MM-JJ retour les jours a partir de lui
+
+    query = select(ClosedDay).order_by(ClosedDay.date)
+
+    if date:
+        query = query.where(ClosedDay.date >= date)
+
+    closures = session.exec(query).all()
 
     return [
         closure_to_closureOutput_type(closure)
@@ -66,4 +73,3 @@ def delete_closure(closure_id: int, admin:User=Depends(require_admin), session:S
     session.delete(closure)
     session.commit()
 
-    
