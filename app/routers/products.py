@@ -88,3 +88,26 @@ def create_product(data: ProductInput, admin: User = Depends(require_admin), ses
     session.refresh(product)
 
     return product_to_productOutput_type(product)
+
+
+@router.put("/{product_id}", summary="Modifier un produit")
+def update_product(product_id:int, data:ProductInput, admin: User= Depends(require_admin), session:Session=Depends(get_session)):
+    product:Product = session.exec(select(Product).where(Product.id == product_id)).first()
+    
+    if product is None or product.is_deleted:
+        raise HTTPException(status_code=404, detail="product not found")
+
+    check_product_data_validity(data)
+
+    product.name = data.name
+    product.price = data.price
+    product.quantity = data.quantity
+    product.description = data.description
+    product.is_available = data.is_available
+
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+
+    return product_to_productOutput_type(product)
+
