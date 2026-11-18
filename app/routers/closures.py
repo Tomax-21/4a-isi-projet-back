@@ -21,3 +21,21 @@ class ClosureOutput:
     id:int
     date:datetime.date
     reason:str|None
+
+
+def closure_to_closureOutput_type(closure: ClosedDay):
+    return {
+        "id": closure.id,
+        "date":closure.date,
+        "reason":closure.reason
+    }
+
+
+@router.get("", response_model=list[ClosureOutput], summary="Liste de tous les jours de fermeture")
+def get_all_closures(session:Session=Depends(get_session)):
+    closures = session.exec(select(ClosedDay).order_by(ClosedDay.date)).all()
+
+    return [
+        closure_to_closureOutput_type(closure)
+        for closure in closures
+    ]
