@@ -18,7 +18,7 @@ class UserCreateOutput:
     username: str
     password: str
 
-@router.post("/", response_model=UserCreateOutput, status_code=201, summary="Créer un compte")
+@router.post("", response_model=UserCreateOutput, status_code=201, summary="Créer un compte")
 def create_user(data:UserCreateInput, session: Session= Depends(get_session)):
     username = data.username.strip()
 
@@ -53,10 +53,10 @@ class PasswordChangeInput:
     new_password: str
 
 @dataclass
-class PasswordChangeOuput:
+class PasswordChangeOutput:
     message: str
 
-@router.patch("/me/password", response_model=PasswordChangeOuput,summary="Changer son mot de passe")
+@router.patch("/me/password", response_model=PasswordChangeOutput,summary="Changer son mot de passe")
 def update_password(data: PasswordChangeInput, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
 
     if not verify_password(data.old_password, user.password_hash):
