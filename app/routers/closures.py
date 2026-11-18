@@ -50,7 +50,7 @@ def get_all_closures(date : datetime.date | None, session:Session=Depends(get_se
     ]
 
 
-@router.post("", response_model=ClosedDay, status_code=201, summary="Ajouter un jour de fermeture")
+@router.post("", response_model=ClosureOutput, status_code=201, summary="Ajouter un jour de fermeture")
 def create_closure(data:ClosureInput, admin:User=Depends(require_admin), session:Session = Depends(get_session)):
 
     is_already_closed = session.exec(select(ClosedDay).where(ClosedDay.date == data.date)).first()
