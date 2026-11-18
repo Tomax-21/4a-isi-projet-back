@@ -57,3 +57,13 @@ def create_closure(data:ClosureInput, admin:User=Depends(require_admin), session
     return closure_to_closureOutput_type(closure)
 
 
+@router.delete("/{closure_id}", status_code=204, summary="Supprimer un jour de fermeture")
+def delete_closure(closure_id: int, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    closure = session.get(ClosedDay, closure_id)
+    if not closure:
+        raise HTTPException(status_code=404, detail="closure not found")
+
+    session.delete(closure)
+    session.commit()
+
+    
