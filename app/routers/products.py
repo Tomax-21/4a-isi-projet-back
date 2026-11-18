@@ -102,7 +102,7 @@ def update_product(product_id:int, data:ProductInput, admin: User= Depends(requi
     check_product_data_validity(data)
     
 
-    product.name = data.name
+    product.name = data.name.strip()
     product.price = data.price
     product.quantity = data.quantity
     product.description = data.description
