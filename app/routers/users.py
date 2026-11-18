@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from dataclasses import dataclass
 from app.database import get_session
 from app.models import User, UserRole
-from app.security import hash_password, generate_random_password, get_current_user, verify_password
+from app.security import hash_password, generate_random_password, get_current_user, verify_password, require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -75,5 +75,15 @@ def update_password(data: PasswordChangeInput, user:User=Depends(get_current_use
         "message": "password changed successfully"
     }
 
-@router.get("")
 
+@dataclass
+class AllUserOutput:
+    id: int
+    username:str
+    role: UserRole
+    is_blocked:bool
+
+
+@router.get("")
+def get_all_users(admin:User = Depends(require_admin), session: Session = Depends(get_session)):
+    return session.exec(select(User)).all()
