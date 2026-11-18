@@ -27,20 +27,23 @@ class ProductOutput:
     is_available: bool
 
 
+def product_to_productOutput_type(product: Product):
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": product.price,
+        "quantity": product.quantity,
+        "is_available": product.is_available,
+    }
+
 
 @router.get("", response_model = list[ProductOutput], summary="Lister tous les produits")
 def get_all_products(session: Session = Depends(get_session)):
     products= session.exec(select(Product).where(Product.is_deleted == False)).all()
 
     return [
-        {
-            "id": product.id,
-            "name": product.name,
-            "description": product.description,
-            "price": product.price,
-            "quantity": product.quantity,
-            "is_available": product.is_available,
-        }
+        product_to_productOutput_type(product)
         for product in products
     ]
 
@@ -51,11 +54,4 @@ def get_product_by_id(product_id: int, session: Session = Depends(get_session)):
     if product is None or product.is_deleted:
         raise HTTPException(status_code=404, detail="product not found")
 
-    return {
-        "id": product.id,
-        "name": product.name,
-        "description": product.description,
-        "price": product.price,
-        "quantity": product.quantity,
-        "is_available": product.is_available,
-    }
+    return product_to_productOutput_type(product)
