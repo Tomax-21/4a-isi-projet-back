@@ -44,3 +44,18 @@ def get_all_products(session: Session = Depends(get_session)):
         for product in products
     ]
 
+@router.get("/{product_id}", response_model = ProductOutput, summary="Infos sur un produit")
+def get_product_by_id(product_id: int, session: Session = Depends(get_session)):
+    product:Product = session.exec(select(Product).where(Product.id == product_id)).first()
+
+    if product is None or product.is_deleted:
+        raise HTTPException(status_code=404, detail="product not found")
+
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": product.price,
+        "quantity": product.quantity,
+        "is_available": product.is_available,
+    }
