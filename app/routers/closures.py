@@ -11,6 +11,8 @@ import datetime
 router = APIRouter(prefix="/closures", tags=["closures"])
 
 
+#YYYY-MM-JJ
+
 @dataclass
 class ClosureInput:
     date: datetime.date
@@ -39,3 +41,19 @@ def get_all_closures(session:Session=Depends(get_session)):
         closure_to_closureOutput_type(closure)
         for closure in closures
     ]
+
+
+@router.post("", response_model=ClosedDay, status_code=201, summary="Ajouter un jour de fermeture")
+def create_closure(data:ClosureInput, admin:User=Depends(require_admin), session:Session = Depends(get_session)):
+
+    is_already_closed = session.exec(select(ClosedDay).where(ClosedDay.date == data.date)).first()
+    if is_already_closed:
+        raise HTTPException(status_code=409, detail="day already closed")
+
+    closure = ClosedDay(date=data.date, reason=data.reason)
+    session.add(closure)
+    session.refresh(closure)
+
+    return closure_to_closureOutput_type(closure)
+
+
