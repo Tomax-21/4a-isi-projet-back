@@ -56,10 +56,10 @@ class PasswordChangeInput:
 def update_password(data: PasswordChangeInput, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
 
     if not verify_password(data.old_password, user.password_hash):
-        raise HTTPException()
+        raise HTTPException(status_code=400, detail="old password incorrect")
 
     if len(data.new_password) < 6:
-        raise HTTPException()
+        raise HTTPException(status_code=400, detail="new password too short")
 
     user.password_hash = hash_password(data.new_password)
     user.must_change_password = False
