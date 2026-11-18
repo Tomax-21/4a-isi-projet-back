@@ -52,7 +52,11 @@ class PasswordChangeInput:
     old_password: str
     new_password: str
 
-@router.patch("/me/password")
+@dataclass
+class PasswordChangeOuput:
+    message: str
+
+@router.patch("/me/password", response_model=PasswordChangeOuput,summary="Changer son mot de passe")
 def update_password(data: PasswordChangeInput, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
 
     if not verify_password(data.old_password, user.password_hash):
@@ -70,4 +74,6 @@ def update_password(data: PasswordChangeInput, user:User=Depends(get_current_use
     return {
         "message": "password changed successfully"
     }
+
+@router.get("")
 
