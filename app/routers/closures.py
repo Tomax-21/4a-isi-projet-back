@@ -34,7 +34,7 @@ def closure_to_closureOutput_type(closure: ClosedDay):
 
 
 @router.get("", response_model=list[ClosureOutput], summary="Liste de tous les jours de fermeture")
-def get_all_closures(date : datetime.date | None, session:Session=Depends(get_session)):
+def get_all_closures(date : datetime.date | None=None, session:Session=Depends(get_session)):
     # ?date=AAAA-MM-JJ retour les jours a partir de lui
 
     query = select(ClosedDay).order_by(ClosedDay.date)
@@ -59,6 +59,7 @@ def create_closure(data:ClosureInput, admin:User=Depends(require_admin), session
 
     closure = ClosedDay(date=data.date, reason=data.reason)
     session.add(closure)
+    session.commit()
     session.refresh(closure)
 
     return closure_to_closureOutput_type(closure)
