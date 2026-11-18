@@ -39,14 +39,14 @@ def product_to_productOutput_type(product: Product):
 
 def check_product_data_validity(product: ProductInput):
 
-    if len(product.name) > 100:
-        raise
+    if len(product.name) > 100 or not product.name.strip():
+        raise HTTPException(status_code=400, detail="invalid name")
 
     if product.quantity < 0:
-        raise
+        raise HTTPException(status_code=400, detail="quantity must be >= 0")
 
     if product.price < 0.01:
-        raise
+        raise HTTPException(status_code=400, detail="price must be >= 0")
 
 
 
