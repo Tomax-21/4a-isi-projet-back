@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from dataclasses import dataclass
 from app.database import get_session
 from app.models import User, UserRole
-from app.security import hash_password
+from app.security import hash_password, generate_random_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -24,7 +24,7 @@ def create_user(data:UserCreateInput, session: Session= Depends(get_session)):
     if is_already_existing:
         raise HTTPException(status_code=409, detail="username already taken")
 
-    password=""
+    password=generate_random_password()
 
     user = User(
         username=username,
