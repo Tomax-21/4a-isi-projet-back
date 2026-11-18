@@ -77,13 +77,38 @@ def update_password(data: PasswordChangeInput, user:User=Depends(get_current_use
 
 
 @dataclass
-class AllUserOutput:
+class UserOutput:
     id: int
     username:str
     role: UserRole
     is_blocked:bool
 
 
-@router.get("", response_model = list[AllUserOutput], summary="Lister tous les utilisateurs")
+@router.get("", response_model = list[UserOutput], summary="Lister tous les utilisateurs")
 def get_all_users(admin:User = Depends(require_admin), session: Session = Depends(get_session)):
     return session.exec(select(User)).all()
+
+
+@dataclass
+class BlockUserInput:
+    is_blocked:bool
+
+
+
+@router.patch("/{user_id}/block", response_model = UserOutput, summary="Bannir et débannier un utilisateur")
+def block_user(user_id: int, data:BlockUserInput, admin:User = Depends(require_admin), session:Session = Depends(get_session)):
+
+    user:User = session.get(User, user_id)
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="user not found")
+    if user_id == admin.id and data.is_blocked:
+        raise HTTPException(status_code=400, detail="you can't ban yourself")
+
+    
+    user.is_blocked = data.is_blocked
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
