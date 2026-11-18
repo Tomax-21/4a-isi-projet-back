@@ -54,7 +54,7 @@ def check_product_data_validity(product: ProductInput):
     if product.quantity < 0:
         raise HTTPException(status_code=400, detail="quantity must be >= 0")
 
-    if product.price < 0.01:
+    if product.price < 0:
         raise HTTPException(status_code=400, detail="price must be >= 0")
 
 
@@ -114,3 +114,11 @@ def update_product(product_id:int, data:ProductInput, admin: User= Depends(requi
 
     return product_to_productOutput_type(product)
 
+@router.delete("/{product_id}",status_code=204, summary="Supprimer un produit")
+def delete_product(product_id: int, admin:User = Depends(require_admin), session:Session=Depends(get_session)):
+
+    product = get_product(product_id, session)
+
+    product.is_deleted = True
+    session.add(product)
+    session.commit()
