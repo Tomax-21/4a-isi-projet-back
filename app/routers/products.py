@@ -37,6 +37,15 @@ def product_to_productOutput_type(product: Product):
         "is_available": product.is_available,
     }
 
+def get_product(product_id:int, session: Session):
+    product:Product = session.exec(select(Product).where(Product.id == product_id)).first()
+        
+    if product is None or product.is_deleted:
+        raise HTTPException(status_code=404, detail="product not found")
+
+    return product
+    
+
 def check_product_data_validity(product: ProductInput):
 
     if len(product.name) > 100 or not product.name.strip():
@@ -61,11 +70,7 @@ def get_all_products(session: Session = Depends(get_session)):
 
 @router.get("/{product_id}", response_model = ProductOutput, summary="Infos sur un produit")
 def get_product_by_id(product_id: int, session: Session = Depends(get_session)):
-    product:Product = session.exec(select(Product).where(Product.id == product_id)).first()
-
-    if product is None or product.is_deleted:
-        raise HTTPException(status_code=404, detail="product not found")
-
+    product = get_product(product_id, session)
     return product_to_productOutput_type(product)
 
 
@@ -92,12 +97,10 @@ def create_product(data: ProductInput, admin: User = Depends(require_admin), ses
 
 @router.put("/{product_id}", summary="Modifier un produit")
 def update_product(product_id:int, data:ProductInput, admin: User= Depends(require_admin), session:Session=Depends(get_session)):
-    product:Product = session.exec(select(Product).where(Product.id == product_id)).first()
-    
-    if product is None or product.is_deleted:
-        raise HTTPException(status_code=404, detail="product not found")
-
+        
+    product = get_product(product_id, session)    
     check_product_data_validity(data)
+    
 
     product.name = data.name
     product.price = data.price
