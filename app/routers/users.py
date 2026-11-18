@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from dataclasses import dataclass
 from app.database import get_session
 from app.models import User, UserRole
-from app.security import hash_password, generate_random_password
+from app.security import hash_password, generate_random_password, get_current_user, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -47,5 +47,27 @@ def create_user(data:UserCreateInput, session: Session= Depends(get_session)):
         "password": password
     }
 
+@dataclass
+class PasswordChangeInput:
+    old_password: str
+    new_password: str
 
+@router.patch("/me/password")
+def update_password(data: PasswordChangeInput, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
+
+    if not verify_password(data.old_password, user.password_hash):
+        raise HTTPException()
+
+    if len(data.new_password) < 6:
+        raise HTTPException()
+
+    user.password_hash = hash_password(data.new_password)
+    user.must_change_password = False
+    session.add(user)
+
+    session.commit()
+
+    return {
+        "message": "password changed successfully"
+    }
 
