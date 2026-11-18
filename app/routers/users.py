@@ -84,6 +84,8 @@ class UserOutput:
     is_blocked:bool
 
 
+
+
 @router.get("", response_model = list[UserOutput], summary="Lister tous les utilisateurs")
 def get_all_users(admin:User = Depends(require_admin), session: Session = Depends(get_session)):
     return session.exec(select(User)).all()
@@ -111,4 +113,9 @@ def block_user(user_id: int, data:BlockUserInput, admin:User = Depends(require_a
     session.commit()
     session.refresh(user)
 
-    return user
+    return {
+        "id": user.id, 
+        "username": user.username, 
+        "role": user.role,
+        "is_blocked": user.is_blocked
+    }
