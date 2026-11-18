@@ -65,7 +65,10 @@ def get_current_user(creds = Depends(bearer), session:Session = Depends(get_sess
     
     return user
 
-
+def require_admin(user: User = Depends(get_current_user)):
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="admin only")
+    return user
 
 def test():
     token = create_token(123)
