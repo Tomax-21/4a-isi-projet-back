@@ -67,6 +67,13 @@ def is_menu_available_on_date(menu:Menu, day:datetime.date):
     return True
 
 
+def get_menu(menu_id:int, session:Session):
+    menu:Menu = session.get(Menu, menu_id)
+    if menu is None or menu.is_deleted:
+        raise HTTPException(status_code=404, detail="menu not found")
+
+    return menu
+
 @router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
 def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_session)):
     # ?date=AAAA-MM-JJ: pour recup juste menus disponibles ce jour la
@@ -84,3 +91,9 @@ def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_se
         menu_to_menuOutput_type(menu)
         for menu in menus
     ]
+
+@router.get("/{menu_id}", response_model=MenuOutput, summary="Infos sur un menu")
+def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
+
+
+    menu = get_menu(menu_id, session)
