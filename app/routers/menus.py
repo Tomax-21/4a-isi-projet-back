@@ -97,3 +97,5 @@ def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
 
 
     menu = get_menu(menu_id, session)
+
+    return menu_to_menuOutput_type(menu)
