@@ -40,3 +40,27 @@ class MenuOutput:
     products: list[MenuProductOutput]
 
 
+def menu_to_menuOutput_type(menu:Menu):
+    return {
+        "id": menu.id,
+        "name": menu.name,
+        "description" :menu.description,
+        "price":menu.price,
+        "is_available":menu.is_available,
+        "start_date":menu.start_date,
+        "end_date":menu.end_date,
+        "products":[
+            {"id":product.id, "name":product.name}
+            for product in menu.products
+        ]
+    }
+
+@router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
+def get_all_menus(session:Session = Depends(get_session)):
+    menus =session.exec(select(Menu).where(Menu.is_deleted==False)).all()
+
+
+    return [
+        menu_to_menuOutput_type(menu)
+        for menu in menus
+    ]
