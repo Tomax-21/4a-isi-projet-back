@@ -77,7 +77,7 @@ def get_menu(menu_id:int, session:Session):
 def get_products_of_menu(product_ids: list[int], session:Session):
     products=[]
 
-    for id in product_ids:
+    for id in sorted(set(product_ids)): #set suppr les doublons
         product = session.get(Product, id)
         if not product:
             raise HTTPException(status_code=404, detail=f"product {id} not found")
@@ -110,10 +110,8 @@ def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_se
 
     temp = []
     if date is not None:
-        for menu in menus:
-            if is_menu_available_on_date(menu, date):
-                temp.append(menu)
-    menus = temp
+        menus = [m for m in menus if is_menu_available_on_date(m, date)]
+
 
     return [
         menu_to_menuOutput_type(menu)
@@ -156,7 +154,7 @@ def update_menu(menu_id:int, data:MenuInput, admin:User=Depends(require_admin), 
     menu:Menu = get_menu(menu_id, session)
     check_menu_data_validity(data)
 
-    products = get_products_of_menu(data.product_ids)
+    products = get_products_of_menu(data.product_ids, session)
 
 
     menu.name = data.name.strip()
