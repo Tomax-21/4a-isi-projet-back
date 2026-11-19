@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from dataclasses import dataclass
 from app.database import get_session
-from app.models import User, Menu
+from app.models import User, Menu, Product
 from app.security import get_current_user, require_admin
 
 import datetime
@@ -74,6 +74,19 @@ def get_menu(menu_id:int, session:Session):
 
     return menu
 
+def get_products_of_menu(product_ids: list[int], session:Session):
+    products=[]
+
+    for id in product_ids:
+        product = session.get(Product, id)
+        if not product:
+            raise HTTPException(status_code=404, detail=f"product {id} not found")
+
+        products.append(product)
+
+    return products
+
+
 
 def check_menu_data_validity(menu:MenuInput):
     if len(menu.name) > 100 or not menu.name.strip():
@@ -118,10 +131,20 @@ def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
 
 @router.post("", response_model=MenuOutput, summary="Creer un nouveau menu")
 def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Session = Depends(get_session)):
-    #check
-    #get products
-    #
-    menu = Menu()
+
+    check_menu_data_validity(data)
+    products = get_products_of_menu(data.product_ids)
+
+ 
+    menu = Menu(
+        name=data.name.strip(),
+        description=data.description,
+        price=data.price,
+        is_available=data.is_available,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        products=products
+    )
     session.add(menu)
     session.commit()
     session.refresh(menu)
