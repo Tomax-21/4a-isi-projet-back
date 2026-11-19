@@ -8,6 +8,9 @@ from app.security import get_current_user, require_admin
 
 import datetime
 
+router = APIRouter(prefix="/menus", tags=["menus"])
+
+
 #end and start date = None = Permanent menu
 @dataclass
 class MenuInput:
@@ -35,3 +38,5 @@ class MenuOutput:
     start_date: datetime.date |None
     end_date : datetime.date|None
     products: list[MenuProductOutput]
+
+
