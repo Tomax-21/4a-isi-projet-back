@@ -68,9 +68,17 @@ def is_menu_available_on_date(menu:Menu, day:datetime.date):
 
 
 @router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
-def get_all_menus(session:Session = Depends(get_session)):
+def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_session)):
+    # ?date=AAAA-MM-JJ: pour recup juste menus disponibles ce jour la
+
     menus =session.exec(select(Menu).where(Menu.is_deleted==False)).all()
 
+    temp = []
+    if date is not None:
+        for menu in menus:
+            if is_menu_available_on_date(menu, date):
+                temp.append(menu)
+    menus = temp
 
     return [
         menu_to_menuOutput_type(menu)
