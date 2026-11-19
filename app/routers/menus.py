@@ -99,3 +99,16 @@ def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
     menu = get_menu(menu_id, session)
 
     return menu_to_menuOutput_type(menu)
+
+
+@router.post("", response_model=MenuOutput, summary="Creer un nouveau menu")
+def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Session = Depends(get_session)):
+    #check
+    #get products
+    #
+    menu = Menu()
+    session.add(menu)
+    session.commit()
+    session.refresh(menu)
+
+    return menu_to_menuOutput_type(menu)
