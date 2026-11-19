@@ -166,9 +166,16 @@ def update_menu(menu_id:int, data:MenuInput, admin:User=Depends(require_admin), 
     menu.start_date = data.start_date
     menu.end_date = data.end_date
     menu.products = products
-    
+
     session.add(menu)
     session.commit()
     session.refresh(menu)
 
     return menu_to_menuOutput_type(menu)
+
+@router.delete("/{menu_id}", status_code=204, summary="Supprimer un menu")
+def delete_menu(menu_id:int, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    menu= get_menu(menu_id, session)
+    menu.is_deleted=True
+    session.add(menu)
+    session.commit()
