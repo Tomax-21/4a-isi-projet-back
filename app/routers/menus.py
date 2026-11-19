@@ -55,6 +55,18 @@ def menu_to_menuOutput_type(menu:Menu):
         ]
     }
 
+def is_menu_available_on_date(menu:Menu, day:datetime.date):
+    if not menu.is_available:
+        return False
+
+    if menu.start_date is not None and day < menu.start_date:
+        return False
+    if menu.end_date is not None and day > menu.end_date:
+        return False
+
+    return True
+
+
 @router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
 def get_all_menus(session:Session = Depends(get_session)):
     menus =session.exec(select(Menu).where(Menu.is_deleted==False)).all()
