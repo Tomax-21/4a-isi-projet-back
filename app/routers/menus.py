@@ -151,3 +151,24 @@ def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Ses
 
     return menu_to_menuOutput_type(menu)
 
+@router.put("/{menu_id}", summary="Modifier un menu")
+def update_menu(menu_id:int, data:MenuInput, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    menu:Menu = get_menu(menu_id, session)
+    check_menu_data_validity(data)
+
+    products = get_products_of_menu(data.product_ids)
+
+
+    menu.name = data.name.strip()
+    menu.description = data.description
+    menu.price = data.price
+    menu.is_available = data.is_available
+    menu.start_date = data.start_date
+    menu.end_date = data.end_date
+    menu.products = products
+    
+    session.add(menu)
+    session.commit()
+    session.refresh(menu)
+
+    return menu_to_menuOutput_type(menu)
