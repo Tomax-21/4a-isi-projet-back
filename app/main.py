@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 
 from app.database import create_db_and_tables
-from app.routers import auth, users, products
+from app.routers import auth, users, products, closures
 
 
 @asynccontextmanager
@@ -29,3 +29,4 @@ async def root():
 app.include_router(auth.router) #var router de auth
 app.include_router(users.router)
 app.include_router(products.router)
+app.include_router(closures.router)
