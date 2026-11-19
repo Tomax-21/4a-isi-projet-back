@@ -129,11 +129,11 @@ def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
     return menu_to_menuOutput_type(menu)
 
 
-@router.post("", response_model=MenuOutput, summary="Creer un nouveau menu")
+@router.post("", response_model=MenuOutput, status_code=201, summary="Creer un nouveau menu")
 def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Session = Depends(get_session)):
 
     check_menu_data_validity(data)
-    products = get_products_of_menu(data.product_ids)
+    products = get_products_of_menu(data.product_ids, session)
 
  
     menu = Menu(
@@ -150,3 +150,4 @@ def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Ses
     session.refresh(menu)
 
     return menu_to_menuOutput_type(menu)
+
