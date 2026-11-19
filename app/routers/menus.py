@@ -74,6 +74,21 @@ def get_menu(menu_id:int, session:Session):
 
     return menu
 
+
+def check_menu_data_validity(menu:MenuInput):
+    if len(menu.name) > 100 or not menu.name.strip():
+        raise HTTPException(status_code=400, detail="invalid name")
+
+    if menu.price < 0:
+        raise HTTPException(status_code=400, detail="price must be >=0")
+
+    if menu.start_date is not None and menu.end_date is not None:
+        if menu.start_date > menu.end_date:
+            raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+    if not menu.product_ids:
+        raise HTTPException(status_code=400, detail="a menu needs at least one product")
+
+
 @router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
 def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_session)):
     # ?date=AAAA-MM-JJ: pour recup juste menus disponibles ce jour la
