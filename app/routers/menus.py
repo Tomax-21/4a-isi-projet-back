@@ -1,0 +1,179 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session, select
+
+from dataclasses import dataclass
+from app.database import get_session
+from app.models import User, Menu, Product
+from app.security import get_current_user, require_admin
+
+import datetime
+
+router = APIRouter(prefix="/menus", tags=["menus"])
+
+
+#end and start date = None = Permanent menu
+@dataclass
+class MenuInput:
+    name:str
+    description: str|None
+    price: float
+    is_available: bool
+    start_date: datetime.date |None
+    end_date : datetime.date|None
+    product_ids: list[int]
+
+#table de transition
+@dataclass
+class MenuProductOutput:
+    id: int
+    name:str
+
+@dataclass
+class MenuOutput:
+    id: int
+    name:str
+    description: str|None
+    price: float
+    is_available: bool
+    start_date: datetime.date |None
+    end_date : datetime.date|None
+    products: list[MenuProductOutput]
+
+
+def menu_to_menuOutput_type(menu:Menu):
+    return {
+        "id": menu.id,
+        "name": menu.name,
+        "description" :menu.description,
+        "price":menu.price,
+        "is_available":menu.is_available,
+        "start_date":menu.start_date,
+        "end_date":menu.end_date,
+        "products":[
+            {"id":product.id, "name":product.name}
+            for product in menu.products
+        ]
+    }
+
+def is_menu_available_on_date(menu:Menu, day:datetime.date):
+    if not menu.is_available:
+        return False
+
+    if menu.start_date is not None and day < menu.start_date:
+        return False
+    if menu.end_date is not None and day > menu.end_date:
+        return False
+
+    return True
+
+
+def get_menu(menu_id:int, session:Session):
+    menu:Menu = session.get(Menu, menu_id)
+    if menu is None or menu.is_deleted:
+        raise HTTPException(status_code=404, detail="menu not found")
+
+    return menu
+
+def get_products_of_menu(product_ids: list[int], session:Session):
+    products=[]
+
+    for id in sorted(set(product_ids)): #set suppr les doublons
+        product = session.get(Product, id)
+        if not product:
+            raise HTTPException(status_code=404, detail=f"product {id} not found")
+
+        products.append(product)
+
+    return products
+
+
+
+def check_menu_data_validity(menu:MenuInput):
+    if len(menu.name) > 100 or not menu.name.strip():
+        raise HTTPException(status_code=400, detail="invalid name")
+
+    if menu.price < 0:
+        raise HTTPException(status_code=400, detail="price must be >=0")
+
+    if menu.start_date is not None and menu.end_date is not None:
+        if menu.start_date > menu.end_date:
+            raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+    if not menu.product_ids:
+        raise HTTPException(status_code=400, detail="a menu needs at least one product")
+
+
+@router.get("",  response_model=list[MenuOutput], summary="Liste tous les menus")
+def get_all_menus(date:datetime.date|None=None, session:Session = Depends(get_session)):
+    # ?date=AAAA-MM-JJ: pour recup juste menus disponibles ce jour la
+
+    menus =session.exec(select(Menu).where(Menu.is_deleted==False)).all()
+
+    temp = []
+    if date is not None:
+        menus = [m for m in menus if is_menu_available_on_date(m, date)]
+
+
+    return [
+        menu_to_menuOutput_type(menu)
+        for menu in menus
+    ]
+
+@router.get("/{menu_id}", response_model=MenuOutput, summary="Infos sur un menu")
+def get_menu_by_id(menu_id:int, session: Session = Depends(get_session)):
+
+
+    menu = get_menu(menu_id, session)
+
+    return menu_to_menuOutput_type(menu)
+
+
+@router.post("", response_model=MenuOutput, status_code=201, summary="Creer un nouveau menu")
+def create_menu(data:MenuInput, admin:User = Depends(require_admin), session:Session = Depends(get_session)):
+
+    check_menu_data_validity(data)
+    products = get_products_of_menu(data.product_ids, session)
+
+ 
+    menu = Menu(
+        name=data.name.strip(),
+        description=data.description,
+        price=data.price,
+        is_available=data.is_available,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        products=products
+    )
+    session.add(menu)
+    session.commit()
+    session.refresh(menu)
+
+    return menu_to_menuOutput_type(menu)
+
+@router.put("/{menu_id}", summary="Modifier un menu")
+def update_menu(menu_id:int, data:MenuInput, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    menu:Menu = get_menu(menu_id, session)
+    check_menu_data_validity(data)
+
+    products = get_products_of_menu(data.product_ids, session)
+
+
+    menu.name = data.name.strip()
+    menu.description = data.description
+    menu.price = data.price
+    menu.is_available = data.is_available
+    menu.start_date = data.start_date
+    menu.end_date = data.end_date
+    menu.products = products
+
+    session.add(menu)
+    session.commit()
+    session.refresh(menu)
+
+    return menu_to_menuOutput_type(menu)
+
+@router.delete("/{menu_id}", status_code=204, summary="Supprimer un menu")
+def delete_menu(menu_id:int, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    menu= get_menu(menu_id, session)
+    menu.is_deleted=True
+    session.add(menu)
+    session.commit()
