@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from app.database import get_session
 from app.models import User, Order, OrderStatus, ClosedDay, Product, Menu, OrderMenu, OrderProduct
 from app.security import get_current_user, require_admin
@@ -24,8 +24,8 @@ class OrderMenuInput:
 @dataclass
 class OrderInput:
     pickup_at: datetime.datetime   # "2026-11-25T12:30:00"
-    products: list[OrderProductInput]
-    menus: list[OrderMenuInput]
+    products: list[OrderProductInput]=field(default_factory=list)
+    menus: list[OrderMenuInput]=field(default_factory=list)#default value = []
 
 
 @dataclass
@@ -107,7 +107,7 @@ def check_order_data_validity(data:OrderInput, pickup_at:datetime.datetime, sess
     for line in data.products:
         if line.quantity < 1:
             raise HTTPException(status_code=400, detail="Quantity of product must be >=1")
-    for line in data.menu:
+    for line in data.menus:
         if line.quantity < 1:
             raise HTTPException(status_code=400, detail="Quantity of menu must be >=1")
 
@@ -167,7 +167,7 @@ def get_ordered_menus(lines: list[OrderMenuInput], pickup_day: datetime.date, se
             raise HTTPException(status_code=400, detail=f"menu {menu.id} is not available on this day")
 
         menus.append((menu, line.quantity))
-    return menu
+    return menus
 
 
 def get_order_from_id(order_id:int, session:Session):
@@ -235,7 +235,7 @@ def cancel_order(order_id:int, user:User=Depends(get_current_user), session:Sess
     order:Order=get_order_from_id(order_id, session)
 
     if order.user_id != user.id:
-        raise HTTPException(status_code=403, delail="not your order")
+        raise HTTPException(status_code=403, detail="not your order")
     if order.status != OrderStatus.PENDING:
         raise HTTPException(status_code=409, detail="only a pending order can be cancelled")
 
