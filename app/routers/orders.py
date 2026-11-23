@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 import datetime
 from dataclasses import dataclass, field
-from app.database import get_session
-from app.models import User, Order, OrderStatus, ClosedDay, Product, Menu, OrderMenu, OrderProduct
+from app.db.database import get_session
+from app.db.models import User, Order, OrderStatus, ClosedDay, Product, Menu, OrderMenu, OrderProduct
 from app.security import get_current_user, require_admin
 from app.routers.menus import is_menu_available_on_date
 

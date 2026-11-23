@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 
-from app.database import create_db_and_tables
+from app.db.database import create_db_and_tables
 from app.routers import auth, users, products, closures, menus, orders
 
 
