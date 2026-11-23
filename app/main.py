@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 
 from app.database import create_db_and_tables
-from app.routers import auth, users, products, closures, menus
+from app.routers import auth, users, products, closures, menus, orders
 
 
 @asynccontextmanager
@@ -31,3 +31,4 @@ app.include_router(users.router)
 app.include_router(products.router)
 app.include_router(closures.router)
 app.include_router(menus.router)
+app.include_router(orders.router)
