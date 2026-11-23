@@ -55,6 +55,41 @@ class OrderOutput:
     menus: list[OrderMenuOutput]
     total: float
 
+def order_to_orderOutput_type(order: Order):
+    total = 0
+    for line in order.product_lines:
+        total += line.unit_price*line.quantity
+    for line in order.menu_lines:
+            total += line.unit_price*line.quantity
+        
+    
+    return {
+        "id": order.id,
+        "user_id": order.user_id,
+        "ordered_at": order.ordered_at,
+        "pickup_at": order.pickup_at,
+        "status": order.status,
+        "products": [
+            {
+                "product_id": line.product_id,
+                "name": line.product.name,
+                "quantity": line.quantity,
+                "unit_price": float(line.unit_price),
+            }
+            for line in order.product_lines
+        ],
+        "menus": [
+            {
+                "menu_id": line.menu_id,
+                "name": line.menu.name,
+                "quantity": line.quantity,
+                "unit_price": float(line.unit_price),
+            }
+            for line in order.menu_lines
+        ],
+        "total": float(total),
+    }
+
 
 def check_order_data_validity(data:OrderInput, pickup_at:datetime.datetime, session:Session):
     if not data.products and not data.menus:
@@ -138,3 +173,23 @@ def create_order(data: OrderInput, user:User=Depends(get_current_user), session:
 
     products = get_ordered_products(data.products, session)
     menus = get_ordered_menus(data.menus, pickup_at.date(), session)
+
+    order = Order(user_id=user.id, pickup_at=to_utc(data.pickup_at), status=OrderStatus.PENDING)
+
+    for product, quantity in products:
+        order.product_lines.append(
+            OrderProduct(product_id=product.id, quantity=quantity, unit_price=product.price)
+        )
+        product.quantity -= quantity
+        session.add(product) # to update quantity
+
+    for menu, quantity in menus:
+        order.menu_lines.append(
+            OrderMenu(menu_id=menu.id, quantity=quantity, unit_price=menu.price)
+        )
+
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    return order_to_orderOutput_type(order)
