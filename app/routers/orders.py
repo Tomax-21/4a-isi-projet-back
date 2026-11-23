@@ -144,7 +144,7 @@ def get_ordered_products(lines: list[OrderProductInput], session:Session):
             raise HTTPException(status_code=404, detail=f"product {line.product_id} not found")
 
         if not product.is_available:
-            raise HTTPException(status_code=409, detail="product {product.id} is not available")
+            raise HTTPException(status_code=409, detail=f"product {product.id} is not available")
 
         if product.quantity < line.quantity:
             raise HTTPException(status_code=409, detail=f"not enough stock for product {product.id}")
@@ -210,6 +210,7 @@ def get_all_my_orders(user:User=Depends(get_current_user), session:Session=Depen
     orders = session.exec(select(Order).where(Order.user_id==user.id).order_by(Order.ordered_at.desc())).all()
 
     return [order_to_orderOutput_type(order) for order in orders]
+
 
 @router.patch("/{order_id}/cancel", response_model=OrderStatusOutput, summary="Annuler ma commande")
 def cancel_order(order_id:int, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
