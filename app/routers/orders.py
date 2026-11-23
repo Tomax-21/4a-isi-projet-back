@@ -193,3 +193,10 @@ def create_order(data: OrderInput, user:User=Depends(get_current_user), session:
     session.refresh(order)
 
     return order_to_orderOutput_type(order)
+
+
+@router.get("/me", response_model=list[OrderOutput], summary="Lister mes commandes")
+def get_all_my_orders(user:User=Depends(get_current_user), session:Session=Depends(get_session)):
+    orders = session.exec(select(Order).where(Order.user_id==user.id).order_by(Order.ordered_at.desc())).all()
+
+    return [order_to_orderOutput_type(order) for order in orders]
