@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from app.database import get_session
 from app.models import User, Order, OrderStatus, ClosedDay, Product, Menu, OrderMenu, OrderProduct
 from app.security import get_current_user, require_admin
+from app.routers.menus import is_menu_available_on_date
+
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -108,6 +110,18 @@ def get_ordered_products(lines: list[OrderProductInput], session:Session):
         products.append((product, line.quantity))
     return products
 
+def get_ordered_menus(lines: list[OrderMenuInput], pickup_day: datetime.date, session:Session):
+    menus = []
+    for line in lines:
+        menu:Menu = session.get(Menu, line.menu_id)
+        if menu is None or menu.is_deleted:
+            raise HTTPException(status_code=404, detail=f"menu {line.menu_id} not found")
+
+        if not is_menu_available_on_date(menu, pickup_day):
+            raise HTTPException(status_code=400, detail=f"menu {menu.id} is not available on this day")
+
+        menus.append((menu, line.quantity))
+    return menu
 
 
 
@@ -121,3 +135,4 @@ def create_order(data: OrderInput, user:User=Depends(get_current_user), session:
     check_order_data_validity(data, pickup_at, session)
 
     products = get_ordered_products(data.products, session)
+    menus = get_ordered_menus(data.menus, pickup_at.date(), session)
