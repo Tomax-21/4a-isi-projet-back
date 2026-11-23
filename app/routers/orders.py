@@ -55,6 +55,11 @@ class OrderOutput:
     menus: list[OrderMenuOutput]
     total: float
 
+@dataclass
+class OrderStatusOutput:
+    id:int
+    status:OrderStatus
+
 def order_to_orderOutput_type(order: Order):
     total = 0
     for line in order.product_lines:
@@ -161,6 +166,11 @@ def get_ordered_menus(lines: list[OrderMenuInput], pickup_day: datetime.date, se
     return menu
 
 
+def get_order_from_id(order_id:int, session:Session):
+    order = session.get(Order, order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="order not found")
+    return order
 
 
 
@@ -200,3 +210,25 @@ def get_all_my_orders(user:User=Depends(get_current_user), session:Session=Depen
     orders = session.exec(select(Order).where(Order.user_id==user.id).order_by(Order.ordered_at.desc())).all()
 
     return [order_to_orderOutput_type(order) for order in orders]
+
+@router.patch("/{order_id}/cancel", response_model=OrderStatusOutput, summary="Annuler ma commande")
+def cancel_order(order_id:int, user:User=Depends(get_current_user), session:Session=Depends(get_session)):
+
+    order:Order=get_order_from_id(order_id, session)
+
+    if order.user_id != user.id:
+        raise HTTPException(status_code=403, delail="not your order")
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(status_code=409, detail="only a pending order can be cancelled")
+
+
+    for line in order.product_lines:
+        line.product.quantity += line.quantity
+        session.add(line.product)
+
+    order.status = OrderStatus.CANCELLED
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    return {"id":order.id, "status":order.status}
