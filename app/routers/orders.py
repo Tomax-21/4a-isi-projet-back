@@ -92,6 +92,8 @@ def to_local(pickup_at: datetime.datetime):
         return pickup_at.astimezone().replace(tzinfo=None)
     return pickup_at # remove user timezone
 
+def to_utc(pickup_at: datetime.datetime) -> datetime.datetime:
+    return pickup_at.astimezone(datetime.timezone.utc)
 
 
 def get_ordered_products(lines: list[OrderProductInput], session:Session):
