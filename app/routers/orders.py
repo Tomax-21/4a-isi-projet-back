@@ -233,3 +233,17 @@ def cancel_order(order_id:int, user:User=Depends(get_current_user), session:Sess
     session.refresh(order)
 
     return {"id":order.id, "status":order.status}
+
+
+@router.get("", response_model=list[OrderOutput], summary="Lister toutes les commandes")
+def get_all_orders(status:OrderStatus|None=None, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    #?status=pending (facultatfi)
+
+    query = select(Order).order_by(Order.pickup_at, Order.id)
+    if status is not None:
+        query = query.where(Order.status==status)
+
+    orders = session.exec(query).all()
+    return [order_to_orderOutput_type(order) for order in orders]
+
+
