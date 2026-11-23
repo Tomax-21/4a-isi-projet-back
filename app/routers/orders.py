@@ -56,6 +56,10 @@ class OrderOutput:
     total: float
 
 @dataclass
+class OrderStatusInput:
+    status:OrderStatus
+
+@dataclass
 class OrderStatusOutput:
     id:int
     status:OrderStatus
@@ -173,6 +177,19 @@ def get_order_from_id(order_id:int, session:Session):
     return order
 
 
+def give_back_stock(order:Order, session:Session):
+    for line in order.product_lines:
+        line.product.quantity += line.quantity
+        session.add(line.product)
+
+def take_stock(order:Order, session:Session):
+    for line in order.product_lines:
+        if line.product.quantity < line.quantity:
+            raise HTTPException(status_code=409, detail=f"not enough stock for product {line.product_id}")
+
+    for line in order.product_lines:
+        line.product.quantity -= line.quantity
+        session.add(line.product)
 
 
 @router.post("", response_model=OrderOutput, status_code=201, summary="Passer une commande")
@@ -223,9 +240,7 @@ def cancel_order(order_id:int, user:User=Depends(get_current_user), session:Sess
         raise HTTPException(status_code=409, detail="only a pending order can be cancelled")
 
 
-    for line in order.product_lines:
-        line.product.quantity += line.quantity
-        session.add(line.product)
+    give_back_stock(order, session)
 
     order.status = OrderStatus.CANCELLED
     session.add(order)
@@ -247,3 +262,18 @@ def get_all_orders(status:OrderStatus|None=None, admin:User=Depends(require_admi
     return [order_to_orderOutput_type(order) for order in orders]
 
 
+@router.patch("/{order_id}/status", response_model=OrderStatusOutput, summary="Changer le statut d'une commande")
+def change_order_status(order_id:int, data:OrderStatusInput, admin:User=Depends(require_admin), session:Session=Depends(get_session)):
+    order:Order = get_order_from_id(order_id, session)
+
+    if data.status == OrderStatus.CANCELLED and order.status != OrderStatus.CANCELLED:
+        give_back_stock(order, session)
+
+    elif data.status != OrderStatus.CANCELLED and order.status == OrderStatus.CANCELLED:
+        take_stock(order, session)
+
+    order.status = data.status
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    return {"id": order.id, "status":order.status}
