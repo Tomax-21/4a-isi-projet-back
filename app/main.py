@@ -7,12 +7,12 @@ from app.routers import auth, users, products, closures, menus, orders
 
 
 @asynccontextmanager
-async def lifespan():
+async def lifespan(app: FastAPI):
     create_db_and_tables()   # exec au démarrage du serv
     yield                    # serv tourne la
              
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 #@app.on_event("startup")
 #def on_startup():
