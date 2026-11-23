@@ -5,7 +5,7 @@ from pathlib import Path
 from app.db.database import create_db_and_tables
 from app.routers import auth, users, products, closures, menus, orders
 from fastapi.staticfiles import StaticFiles
-
+from fastapi.responses import FileResponse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,5 +34,10 @@ app.include_router(products.router)
 app.include_router(closures.router)
 app.include_router(menus.router)
 app.include_router(orders.router)
+
+@app.get("/")
+async def serve_index_page():
+    return FileResponse(BASE_DIR / "static" / "index.html")
+
 
 app.mount("/", StaticFiles(directory=BASE_DIR / "static", html=True), name="static")
