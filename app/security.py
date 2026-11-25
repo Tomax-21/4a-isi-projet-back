@@ -7,8 +7,8 @@ import jwt
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer
 from sqlmodel import Session
-from app.database import get_session
-from app.models import User
+from app.db.database import get_session
+from app.db.models import User
 
 
 

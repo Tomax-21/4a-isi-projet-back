@@ -1,0 +1,6 @@
+[submodule "app/db"]
+	path = app/db
+	url = https://github.com/Tomax-21/4a-isi-projet-db.git
+[submodule "static"]
+	path = static
+	url = https://github.com/Tomax-21/4a-isi-projet-front.git
